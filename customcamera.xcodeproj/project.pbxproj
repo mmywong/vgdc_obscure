@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		43136F07197DE00D00FF5A89 /* sample.PNG in Resources */ = {isa = PBXBuildFile; fileRef = 43136F06197DE00D00FF5A89 /* sample.PNG */; };
 		436045A9197CD5CC002BD315 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 436045A8197CD5CC002BD315 /* Foundation.framework */; };
 		436045AB197CD5CC002BD315 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 436045AA197CD5CC002BD315 /* CoreGraphics.framework */; };
 		436045AD197CD5CC002BD315 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 436045AC197CD5CC002BD315 /* UIKit.framework */; };
@@ -34,6 +35,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		43136F06197DE00D00FF5A89 /* sample.PNG */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sample.PNG; sourceTree = "<group>"; };
 		436045A5197CD5CC002BD315 /* customcamera.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = customcamera.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		436045A8197CD5CC002BD315 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		436045AA197CD5CC002BD315 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -82,6 +84,7 @@
 		4360459C197CD5CC002BD315 = {
 			isa = PBXGroup;
 			children = (
+				43136F06197DE00D00FF5A89 /* sample.PNG */,
 				436045AE197CD5CC002BD315 /* customcamera */,
 				436045CD197CD5CE002BD315 /* customcameraTests */,
 				436045A7197CD5CC002BD315 /* Frameworks */,
@@ -231,6 +234,7 @@
 				436045C1197CD5CD002BD315 /* Images.xcassets in Resources */,
 				436045B3197CD5CC002BD315 /* InfoPlist.strings in Resources */,
 				436045BC197CD5CD002BD315 /* Main.storyboard in Resources */,
+				43136F07197DE00D00FF5A89 /* sample.PNG in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -456,6 +460,7 @@
 				436045D9197CD5CE002BD315 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		436045DA197CD5CE002BD315 /* Build configuration list for PBXNativeTarget "customcameraTests" */ = {
 			isa = XCConfigurationList;
@@ -464,6 +469,7 @@
 				436045DC197CD5CE002BD315 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
