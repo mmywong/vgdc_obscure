@@ -1,5 +1,8 @@
 customcamera_cropped_image_4by3_output
 ======================================
+
+![Alt text](http://full/path/to/sample.png "sample image")
+
 Creates custom camera from AVCaptureSession that is shown live and then take image when pressed this video feed.
 Then crops it to 640 by 640.
 
