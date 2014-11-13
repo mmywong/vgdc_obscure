@@ -6,53 +6,238 @@
 //  Copyright (c) 2014 Calvin Tham. All rights reserved.
 //
 
+//remove NSLogs from release build
+
 #import "ViewController.h"
-#import <AVFoundation/AVFoundation.h>
-@interface ViewController ()
-@property (strong, nonatomic) IBOutlet UIView *FrameForCapture;
-@property (strong, nonatomic) IBOutlet UIImageView *imageView;
-- (IBAction)takePhoto:(id)sender;
-
-@end
-
+#import <CoreFoundation/CoreFoundation.h>
+#import  <ImageIO/CGImageProperties.h>
 @implementation ViewController
 AVCaptureSession *session;
 AVCaptureStillImageOutput *stillImageOutput;
+AVCaptureDevice *inputDevice;
+AVCaptureDeviceInput *deviceInput;
+AVCaptureVideoPreviewLayer *previewLayer;
+NSDictionary *outputSettings;
 
--(void)viewWillAppear:(BOOL)animated
+- (void)loadView
 {
+    CGRect screenRect = [[UIScreen mainScreen] bounds];
+    screenWidth = screenRect.size.width;
+    screenHeight = screenRect.size.height;
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(switchCameraTapped:)
+                                                 name:@"switch_camera"
+                                               object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(saveScreenshotToPhotos:)
+                                                 name:@"save_screenshot"
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(doneTakingScreenshotOfCamera:)
+                                                 name:@"doneTakingScreenshotOfCamera"
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(getIfCameraSideIsBack)
+                                                 name:@"getIfCameraSideIsBack"
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(finishedUpdatingLiveCameraFeedImage:)
+                                                 name:@"finishedUpdatingLiveCameraFeedImage"
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(receiveRequestForRectangleObjectCGPoints)
+                                                 name:@"requestRectangleObjectCoordinates"
+                                               object:nil];
+    
+    parentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, screenHeight)];
+    [self setView:parentView];
+    
+    cameraView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, screenHeight)];
+    [self startCamera];
+    
+    cameraSideIsBack = YES;
+    imageView = [[UIImageView alloc] init];
+    finalImage = [[UIImage alloc] init];
+    
+    [parentView addSubview:cameraView];
+    
+    SKView * skView = [[SKView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, screenHeight)];
+    skView.showsFPS = NO;
+    skView.showsNodeCount = NO;
+    SKScene *clothesScene = [DrawScene sceneWithSize:skView.bounds.size];
+    clothesScene.scaleMode = SKSceneScaleModeAspectFill;
+    
+    skView.allowsTransparency = YES;
+    clothesScene.backgroundColor = [UIColor clearColor];
+    [parentView addSubview:skView];
+    [skView presentScene:clothesScene];
+    
+    //update the live camera feed UIImage and then detect for rectangles
+    //then update the rectangle's 4 CGPoints
+    [NSTimer scheduledTimerWithTimeInterval:0.5
+                                     target:self
+                                   selector:@selector(updateLiveCameraFeedImageAndDetectForRectangles)
+                                   userInfo:nil
+                                    repeats:YES];
+}
+
+
+
+-(void)viewWillAppear:(BOOL)animated{
+    //call deallocSession when exit app to background
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(deallocSession) name:UIApplicationWillResignActiveNotification object:[UIApplication sharedApplication]];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(deallocSession) name:UIApplicationWillChangeStatusBarFrameNotification object:[UIApplication sharedApplication]];
+    //call startCamera when return to app from background
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startCamera) name:UIApplicationDidBecomeActiveNotification object:[UIApplication sharedApplication]];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startCamera) name:UIApplicationWillEnterForegroundNotification object:[UIApplication sharedApplication]];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+-(void)deallocSession
+{
+    NSLog(@"DISAPPEAR");
+    [previewLayer removeFromSuperlayer];
+    for(AVCaptureInput *input1 in session.inputs) {
+        [session removeInput:input1];
+    }
+    
+    for(AVCaptureOutput *output1 in session.outputs) {
+        [session removeOutput:output1];
+    }
+    
+    [session stopRunning];
+    session=nil;
+    outputSettings=nil;
+    inputDevice=nil;
+    deviceInput=nil;
+    previewLayer=nil;
+    stillImageOutput=nil;
+}
+-(void)startCamera
+{
+    NSLog(@"APPEARED");
     session = [[AVCaptureSession alloc] init];
     [session setSessionPreset:AVCaptureSessionPresetPhoto];
     
-    AVCaptureDevice *inputDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
+    inputDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
+    
     NSError *error;
-    AVCaptureDeviceInput *deviceInput = [AVCaptureDeviceInput deviceInputWithDevice:inputDevice error:&error];
+    
+    deviceInput = [AVCaptureDeviceInput deviceInputWithDevice:inputDevice error:&error];
     
     if([session canAddInput:deviceInput])
     {
         [session addInput:deviceInput];
     }
     
-    AVCaptureVideoPreviewLayer *previewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:session];
+    previewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:session];
     [previewLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
-    CALayer *rootLayer = [[self view] layer];
+    CALayer *rootLayer = [cameraView layer];
     [rootLayer setMasksToBounds:YES];
-    CGRect frame = self.FrameForCapture.frame;
+    CGRect frame = CGRectMake(0,0, screenWidth, screenHeight);
+    
+    //[previewLayer.connection setVideoOrientation:AVCaptureVideoOrientationLandscapeRight];
     
     [previewLayer setFrame:frame];
     
-    [rootLayer insertSublayer:previewLayer atIndex:0];
+    [rootLayer insertSublayer:previewLayer above:rootLayer];
     
     stillImageOutput = [[AVCaptureStillImageOutput alloc] init];
-    NSDictionary *outputSettings = [[NSDictionary alloc] initWithObjectsAndKeys:AVVideoCodecJPEG, AVVideoCodecKey, nil];
+    outputSettings = [[NSDictionary alloc] initWithObjectsAndKeys:AVVideoCodecJPEG, AVVideoCodecKey, nil];
     [stillImageOutput setOutputSettings:outputSettings];
+    
     
     [session addOutput:stillImageOutput];
     
     [session startRunning];
+    
+    if(cameraSideIsBack == NO)
+        [self switchCameraTapped:self];
+    
 }
-- (IBAction)takePhoto:(id)sender
+
+-(void)getIfCameraSideIsBack{
+    //NSLog(@"SENT");
+    NSString *cameraType;
+    
+    if(cameraSideIsBack){
+        cameraType = @"BACK";
+    }
+    else
+        cameraType = @"FRONT";
+    
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:@"receiveIfCameraSideIsBackAndUpdateIcon"
+     object:cameraType];
+}
+
+-(IBAction)switchCameraTapped:(id)sender
 {
+    //Change camera source
+    if(session){
+        
+        //NSLog(@"SWITCHING CAMERA");
+        //Indicate that some changes will be made to the session
+        [session beginConfiguration];
+        
+        //Remove existing input
+        [session removeInput:deviceInput];
+        
+        //Get new input
+        inputDevice = nil;
+        if(deviceInput.device.position == AVCaptureDevicePositionBack)
+        {
+            inputDevice = [self cameraWithPosition:AVCaptureDevicePositionFront];
+            cameraSideIsBack = NO;
+        }
+        else
+        {
+            inputDevice = [self cameraWithPosition:AVCaptureDevicePositionBack];
+            cameraSideIsBack = YES;
+        }
+        
+        //Add input to session
+        deviceInput = [[AVCaptureDeviceInput alloc] initWithDevice:inputDevice error:nil];
+        [session addInput:deviceInput];
+        
+        //Commit all the configuration changes at once
+        [session commitConfiguration];
+    }
+    
+    //change icon to reflect switched camera (either front or back)
+    [self getIfCameraSideIsBack];
+}
+
+// Find a camera with the specified AVCaptureDevicePosition, returning nil if one is not found
+- (AVCaptureDevice *) cameraWithPosition:(AVCaptureDevicePosition) position
+{
+    NSArray *devices = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
+    for (AVCaptureDevice *device in devices)
+    {
+        if ([device position] == position) return device;
+    }
+    return [self cameraWithPosition:AVCaptureDevicePositionFront];
+    //return nil;
+}
+
+-(void)saveScreenshotToPhotos:(NSNotification*)notification{
+    drawingScreenshot = (UIImage*) notification.object;
+    [self takePhoto:nil];
+}
+
+
+
+- (void)takePhoto:(id)sender
+{
+    //[self updateLiveCameraFeedImage];
+    //[self detectForFacesInUIImage:liveCameraFeedImage];
+    
+    __block UIImage* savedImage;
     AVCaptureConnection *videoConnnection = nil;
     
     for(AVCaptureConnection *connection in stillImageOutput.connections)
@@ -61,6 +246,7 @@ AVCaptureStillImageOutput *stillImageOutput;
         {
             if([[port mediaType] isEqual:AVMediaTypeVideo])
             {
+                //NSLog(@"YAY");
                 videoConnnection = connection;
                 break;
             }
@@ -70,60 +256,78 @@ AVCaptureStillImageOutput *stillImageOutput;
             break;
         }
     }
-    
     [stillImageOutput captureStillImageAsynchronouslyFromConnection:videoConnnection completionHandler:^(CMSampleBufferRef imageDataSampleBuffer, NSError *error) {
+        CFDictionaryRef exifAttachments = CMGetAttachment( imageDataSampleBuffer, kCGImagePropertyExifDictionary, NULL);
+        if (exifAttachments)
+        {
+            // Do something with the attachments.
+            //NSLog(@"attachements: %@", exifAttachments);
+        }
+        else
+        {
+            //NSLog(@"no attachments");
+        }
         if(imageDataSampleBuffer != NULL){
             NSData *imageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageDataSampleBuffer];
             UIImage *image = [UIImage imageWithData:imageData];
             
-            //note:
-            //(image.size.height-image.size.width)/2
-            //is to account for the borders at the top and bottom of the not yet cropped image
-            int barSize = (image.size.height-image.size.width)/2;
-            image = [self cropImage:image to:CGRectMake(barSize,0, image.size.width, image.size.height) andScaleTo:CGSizeMake(640, 640)];
-            self.imageView.image = image;
+            [imageView setBounds:previewLayer.bounds];
+            imageView.contentMode = UIViewContentModeScaleAspectFill;
+            imageView.transform = CGAffineTransformMake(
+                                                        1, 0, 0, -1, 0, imageView.bounds.size.width
+                                                        );
+            [imageView setImage:image];
             
+            UIGraphicsBeginImageContext(imageView.frame.size);
+            [imageView.layer renderInContext:UIGraphicsGetCurrentContext()];
+            image = UIGraphicsGetImageFromCurrentImageContext();
+            UIGraphicsEndImageContext();
+            savedImage = image;
+            finalImage = savedImage;
+            [[NSNotificationCenter defaultCenter]
+             postNotificationName:@"doneTakingScreenshotOfCamera"
+             object:savedImage];
         }
     }];
 }
 
-- (UIImage *)cropImage:(UIImage *)image to:(CGRect)cropRect andScaleTo:(CGSize)size {
-    UIGraphicsBeginImageContext(size);
-    CGContextRef context = UIGraphicsGetCurrentContext();
-    CGImageRef subImage = CGImageCreateWithImageInRect([image CGImage], cropRect);
-    NSLog(@"---------");
-    NSLog(@"*cropRect.origin.y=%f",cropRect.origin.y);
-    NSLog(@"*cropRect.origin.x=%f",cropRect.origin.x);
+-(void)doneTakingScreenshotOfCamera:(NSNotification*)notification{
+    cameraScreenshot = (UIImage*) notification.object;
     
-    NSLog(@"*cropRect.size.width=%f",cropRect.size.width);
-    NSLog(@"*cropRect.size.height=%f",cropRect.size.height);
+    UIImage *imageFromCamera = cameraScreenshot;
+    UIImage *image_front = drawingScreenshot;
     
-    NSLog(@"---------");
+    //UIImageWriteToSavedPhotosAlbum(image_front, nil,nil,nil);
     
-    NSLog(@"*size.width=%f",size.width);
-    NSLog(@"*size.height=%f",size.height);
+    //flip camera image if facing user, because that is mirrored
+    if(deviceInput.device.position == AVCaptureDevicePositionFront)
+        imageFromCamera = [UIImage imageWithCGImage:imageFromCamera.CGImage
+                                              scale:imageFromCamera.scale
+                                        orientation:UIImageOrientationUpMirrored];
     
-    CGRect myRect = CGRectMake(0.0f, 0.0f, size.width, size.height);
-    CGContextScaleCTM(context, 1.0f, -1.0f);
-    CGContextTranslateCTM(context, 0.0f, -size.height);
-    CGContextDrawImage(context, myRect, subImage);
-    UIImage* croppedImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    CGImageRelease(subImage);
-    
-    //ROTATE LEFT 90 DEGREES
-    UIImage * LandscapeImage = croppedImage;
-    UIImage * PortraitImage = [[UIImage alloc] initWithCGImage: LandscapeImage.CGImage
-                                                         scale: 1.0
-                                                   orientation: UIImageOrientationRight];
-    
-    return PortraitImage;
+    UIImage *image_together = [self imageByCombiningImage:imageFromCamera withImage:image_front];
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:@"finishedTakingAllScreenshots"
+     object:nil];
 }
 
-- (void)viewDidLoad
-{
-    [super viewDidLoad];
-	// Do any additional setup after loading the view, typically from a nib.
+-(UIImage*)imageByCombiningImage:(UIImage*)firstImage withImage:(UIImage*)secondImage {
+    UIImage *image = nil;
+    
+    CGSize newImageSize = CGSizeMake(MAX(firstImage.size.width, secondImage.size.width), MAX(firstImage.size.height, secondImage.size.height));
+    if (UIGraphicsBeginImageContextWithOptions != NULL) {
+        UIGraphicsBeginImageContextWithOptions(newImageSize, NO, [[UIScreen mainScreen] scale]);
+    } else {
+        UIGraphicsBeginImageContext(newImageSize);
+    }
+    [firstImage drawAtPoint:CGPointMake(roundf((newImageSize.width-firstImage.size.width)/2),
+                                        roundf((newImageSize.height-firstImage.size.height)/2))];
+    [secondImage drawAtPoint:CGPointMake(roundf((newImageSize.width-secondImage.size.width)/2),
+                                         roundf((newImageSize.height-secondImage.size.height)/2))];
+    image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    return image;
 }
 
 - (void)didReceiveMemoryWarning
@@ -132,5 +336,112 @@ AVCaptureStillImageOutput *stillImageOutput;
     // Dispose of any resources that can be recreated.
 }
 
+- (BOOL) prefersStatusBarHidden
+{
+    return YES;
+}
+
+
+//RECTANGLE OBJECT DETECTION
+-(void)detectForFacesInUIImage:(UIImage *)facePicture
+{
+    CIImage* image = [CIImage imageWithCGImage:facePicture.CGImage];
+    CIDetector* detector = [CIDetector detectorOfType:CIDetectorTypeRectangle
+                                              context:nil options:[NSDictionary dictionaryWithObject:CIDetectorAccuracyHigh forKey:CIDetectorAccuracy]];
+    
+    NSArray* features = [detector featuresInImage:image];
+    for(CIRectangleFeature* faceObject in features)
+    {
+        topLeft = faceObject.topLeft;
+        topRight = faceObject.topRight;
+        bottomRight = faceObject.bottomRight;
+        bottomLeft = faceObject.bottomLeft;
+    }
+}
+
+-(void)updateLiveCameraFeedImageAndDetectForRectangles
+{
+    [self updateLiveCameraFeedImage];
+    [self detectForFacesInUIImage:liveCameraFeedImage];
+}
+- (void)updateLiveCameraFeedImage
+{
+    __block UIImage* savedImage;
+    AVCaptureConnection *videoConnnection = nil;
+    
+    for(AVCaptureConnection *connection in stillImageOutput.connections)
+    {
+        for(AVCaptureInputPort *port in [connection inputPorts])
+        {
+            if([[port mediaType] isEqual:AVMediaTypeVideo])
+            {
+                //NSLog(@"YAY");
+                videoConnnection = connection;
+                break;
+            }
+        }
+        if(videoConnnection)
+        {
+            break;
+        }
+    }
+    [stillImageOutput captureStillImageAsynchronouslyFromConnection:videoConnnection completionHandler:^(CMSampleBufferRef imageDataSampleBuffer, NSError *error) {
+        CFDictionaryRef exifAttachments = CMGetAttachment( imageDataSampleBuffer, kCGImagePropertyExifDictionary, NULL);
+        if (exifAttachments)
+        {
+            // Do something with the attachments.
+            //NSLog(@"attachements: %@", exifAttachments);
+        }
+        else
+        {
+            //NSLog(@"no attachments");
+        }
+        if(imageDataSampleBuffer != NULL){
+            NSData *imageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageDataSampleBuffer];
+            UIImage *image = [UIImage imageWithData:imageData];
+            
+            [imageView setBounds:previewLayer.bounds];
+            imageView.contentMode = UIViewContentModeScaleAspectFill;
+            imageView.transform = CGAffineTransformMake(
+                                                        1, 0, 0, -1, 0, imageView.bounds.size.width
+                                                        );
+            [imageView setImage:image];
+            
+            UIGraphicsBeginImageContext(imageView.frame.size);
+            [imageView.layer renderInContext:UIGraphicsGetCurrentContext()];
+            image = UIGraphicsGetImageFromCurrentImageContext();
+            UIGraphicsEndImageContext();
+            savedImage = image;
+            finalImage = savedImage;
+            
+            [[NSNotificationCenter defaultCenter]
+             postNotificationName:@"finishedUpdatingLiveCameraFeedImage"
+             object:savedImage];
+        }
+    }];
+}
+
+-(void)finishedUpdatingLiveCameraFeedImage:(NSNotification*)notification{
+    liveCameraFeedImage = (UIImage*) notification.object;
+}
+
+//from DrawScene
+-(void)receiveRequestForRectangleObjectCGPoints
+{
+    NSArray *points = [NSArray arrayWithObjects:
+                       [NSValue valueWithCGPoint:topLeft],
+                       [NSValue valueWithCGPoint:topRight],
+                       [NSValue valueWithCGPoint:bottomRight],
+                       [NSValue valueWithCGPoint:bottomLeft],
+                       nil];
+    [self sendRectangleObjectCGPoints:points];
+}
+
+-(void)sendRectangleObjectCGPoints:(NSArray*)points
+{
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:@"sendRectangleObjectCGPoints"
+     object:points];
+}
 
 @end
