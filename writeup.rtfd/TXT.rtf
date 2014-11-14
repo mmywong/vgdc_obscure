@@ -1,0 +1,348 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1265\cocoasubrtf210
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red100\green56\blue32;\red196\green26\blue22;\red0\green116\blue0;
+\red170\green13\blue145;\red46\green13\blue110;\red92\green38\blue153;\red38\green71\blue75;\red28\green0\blue207;
+\red63\green110\blue116;}
+\margl1440\margr1440\vieww33100\viewh18460\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0\fs36 \cf0 DATE: Tuesday November 11 2014\
+WHAT: #2 Programmer meeting: Using CIDetector to detect rectangles with the camera. Then drawing a background over the rectangle. Making ducks fly out from the background and make it look 3D.\
+
+\b \
+\
+PART 1) Using CIDetector
+\b0 \
+//takes in an image\
+//code from rectangleTest\
+//inside ViewController.m
+\fs24 \
+\
+\pard\tx866\pardeftab866\pardirnatural
+
+\f1\fs36 \cf2 \CocoaLigature0 #import \cf3 "ViewController.h"\cf2 \
+#import \cf3 <CoreImage/CoreImage.h>\cf2 \
+#import \cf3 <QuartzCore/QuartzCore.h>\cf2 \
+\pard\tx866\pardeftab866\pardirnatural
+\cf0 \
+\pard\tx866\pardeftab866\pardirnatural
+\cf4 //declare variables here\cf0 \
+\pard\tx866\pardeftab866\pardirnatural
+\cf5 @interface\cf0  ViewController ()\
+\{\
+    \cf4 //make a UIImageView which is a view\cf0 \
+    \cf4 //that displays UIImages onscreen\cf0 \
+    UIImageView *imageView;\
+\}\
+\cf5 @end\cf0 \
+\
+\pard\tx866\pardeftab866\pardirnatural
+\cf4 //implement variables here\cf0 \
+\pard\tx866\pardeftab866\pardirnatural
+\cf5 @implementation\cf0  ViewController\
+- (\cf5 void\cf0 )viewDidLoad \{\
+    [\cf5 super\cf0  viewDidLoad];\
+    \
+    \cf4 //make a UIImage with the image named socket.jpeg\cf0 \
+    UIImage *image = [UIImage imageNamed:\cf3 @"socket.jpeg"\cf0 ];\
+    \
+    \cf4 //make an UIImageView to display the UIImage onscreen\cf0 \
+    imageView = [[UIImageView alloc] initWithImage:image];\
+    \
+    \cf4 //add the imageView onto the screen\cf0 \
+    [\cf5 self\cf0 .view addSubview:imageView];\
+    \
+    \cf4 //detect for rectangles in that UIImage\cf0 \
+    [\cf5 self\cf0  detectForRectInUIImage:image];\
+\}\
+\
+\pard\tx866\pardeftab866\pardirnatural
+\cf4 //this function detects for rectangles in a UIImage\cf0 \
+\cf4 //a UIImage is an image\cf0 \
+\cf4 //the image we passed it is socket.jpeg\cf0 \
+-(\cf5 void\cf0 )detectForRectInUIImage:(UIImage *)pic\
+\{\
+    \cf4 //Make a CIImage, which holds data from the UIImage\cf0 \
+    CIImage* image = [CIImage imageWithCGImage:pic.CGImage];\
+    \
+    \cf4 //Make a CIDetector (Core Image Detector) which can detect 1 of 3 things\cf0 \
+    \cf4 //1) rectangles\cf0 \
+    \cf4 //2) faces\cf0 \
+    \cf4 //3) QR codes\cf0 \
+    \
+    \cf4 //CIDetectorTypeRectangle means we want to detect rectangles\cf0 \
+    \cf4 //There\'92s also CIDetectorTypeFace, CIDetectorTypeQRCode\cf0 \
+    \cf4 //CIDetectorAccuracyLow means we want low accuracy in detecting rectangles\cf0 \
+    \cf4 //if we want better detection of them, we should use CIDetectorAccuracyHigh\cf0 \
+    CIDetector* detector = [CIDetector detectorOfType:CIDetectorTypeRectangle\
+                                              context:\cf5 nil\cf0  options:[NSDictionary dictionaryWithObject:CIDetectorAccuracyLow forKey:CIDetectorAccuracy]];\
+    \
+    \cf4 //[detector featuresInImage: image];\cf0 \
+    \cf4 //this calls the featuresInImage function from the detector object\cf0 \
+    \cf4 //with the parameter: image\cf0 \
+    \cf4 //it returns an array containing many CIRectangleFeatures\cf0 \
+    NSArray* features = [detector featuresInImage:image];\
+    \
+    \cf4 //Go through the array and get each individual CIRectangleFeature\cf0 \
+    \cf4 //CIRectangleFeature is an object that contains information regarding\cf0 \
+    \cf4 //the detected rectangle\cf0 \
+    \cf4 //here I get the 4 points of the rectangle\cf0 \
+    \cf4 //rectObject.topLeft\cf0 \
+    \cf4 //rectObject.topRight\cf0 \
+    \cf4 //rectObject.bottomRight\cf0 \
+    \cf4 //rectObject.bottomLeft\cf0 \
+    \cf4 //to get the x and y\cf0 \
+				\cf4 //rectObject.bottomLeft.x\cf0 \
+				\cf4 //rectObject.bottomLeft.y\cf0 \
+    \cf5 for\cf0 (CIRectangleFeature* rectObject \cf5 in\cf0  features)\
+    \{\
+        NSLog(\cf3 @"Detected Rectangle's 4 pts (x,y):"\cf0 );\
+        NSLog(\cf3 @"TopLeft: (%i, %i)\\n"\cf0 ,(\cf5 int\cf0 )rectObject.topLeft.x,(\cf5 int\cf0 )rectObject.topLeft.y);\
+        NSLog(\cf3 @"TopRight: (%i, %i)\\n"\cf0 ,(\cf5 int\cf0 )rectObject.topRight.x,(\cf5 int\cf0 )rectObject.topRight.y);\
+        NSLog(\cf3 @"BottomRight: (%i, %i)\\n"\cf0 ,(\cf5 int\cf0 )rectObject.bottomRight.x,(\cf5 int\cf0 )rectObject.bottomLeft.y);\
+        \cf6 NSLog\cf0 (\cf3 @"BottomLeft: (%i, %i)\\n"\cf0 ,(\cf5 int\cf0 )rectObject.\cf7 bottomLeft\cf0 .\cf7 x\cf0 ,(\cf5 int\cf0 )rectObject.\cf7 bottomLeft\cf0 .\cf7 y\cf0 );\
+        \
+        \cf4 //draw lines to connect the 4 points\cf0 \
+        \cf4 //this will in effect draw the 4 sides\cf0 \
+        \cf4 //of the rectangle\cf0 \
+        [\cf5 self\cf0  \cf8 drawLine\cf0 :rectObject.\cf7 topLeft\cf0 .\cf7 x\cf0  :rectObject.\cf7 topLeft\cf0 .\cf7 y\cf0  :rectObject.\cf7 topRight\cf0 .\cf7 x\cf0  :rectObject.\cf7 topRight\cf0 .\cf7 y\cf0 ];\
+        [\cf5 self\cf0  \cf8 drawLine\cf0 :rectObject.\cf7 topRight\cf0 .\cf7 x\cf0  :rectObject.\cf7 topRight\cf0 .\cf7 y\cf0  :rectObject.\cf7 bottomRight\cf0 .\cf7 x\cf0  :rectObject.\cf7 bottomRight\cf0 .\cf7 y\cf0 ];\
+        [\cf5 self\cf0  \cf8 drawLine\cf0 :rectObject.\cf7 bottomRight\cf0 .\cf7 x\cf0  :rectObject.\cf7 bottomRight\cf0 .\cf7 y\cf0  :rectObject.\cf7 bottomLeft\cf0 .\cf7 x\cf0  :rectObject.\cf7 bottomLeft\cf0 .\cf7 y\cf0 ];\
+        [\cf5 self\cf0  \cf8 drawLine\cf0 :rectObject.\cf7 bottomLeft\cf0 .\cf7 x\cf0  :rectObject.\cf7 bottomLeft\cf0 .\cf7 y\cf0  :rectObject.\cf7 topLeft\cf0 .\cf7 x\cf0  :rectObject.\cf7 topLeft\cf0 .\cf7 y\cf0 ];\
+    \}\
+\}\
+\
+\cf4 //(x1,y1) is first point of the line\cf0 \
+\cf4 //(x2,y2) is the second point of the line\cf0 \
+-(\cf5 void\cf0 )drawLine:(\cf5 int\cf0 )x1 :(\cf5 int\cf0 )y1 :(\cf5 int\cf0 )x2 :(\cf5 int\cf0 )y2\
+\{\
+    \cf7 UIBezierPath\cf0  *path = [\cf7 UIBezierPath\cf0  \cf6 bezierPath\cf0 ];\
+    [path \cf6 moveToPoint\cf0 :\cf6 CGPointMake\cf0 (x1, y1)];\
+    [path \cf6 addLineToPoint\cf0 :\cf6 CGPointMake\cf0 (x2, y2)];\
+    \
+    \cf7 CAShapeLayer\cf0  *shapeLayer = [\cf7 CAShapeLayer\cf0  \cf6 layer\cf0 ];\
+    [shapeLayer \cf6 setPath\cf0 :path.\cf7 CGPath\cf0 ];\
+    [shapeLayer \cf6 setStrokeColor\cf0 : [\cf7 UIColor\cf0  \cf6 redColor\cf0 ].\cf7 CGColor\cf0 ];\
+    [shapeLayer \cf6 setLineWidth\cf0 :\cf9 5\cf0 ];\
+    [\cf10 imageView\cf0 .\cf7 layer\cf0  \cf6 addSublayer\cf0 :shapeLayer];\
+\}\
+\cf4 //end the class\cf0 \
+\pard\tx866\pardeftab866\pardirnatural
+\cf5 @end\cf0 \
+\cf5 \
+\cf0 \
+
+\f0\b\fs24 \CocoaLigature1 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\fs36 \cf0 PART 2) Use points of detected rectangle to place background over the rectangle. Then make ducks fly out in 3D.
+\b0 \
+//Open the DrawScene.m class inside the DuckRectDetect xcode project\
+//5 functions to look at\
+	//init\
+		//declare variables\
+	//drawBg\
+		//draw background\
+	//makeDuckFlyUpRight\
+		//SKSpriteNode make\
+		//spritesheet make\
+		//skactions\
+		//sound\
+	//update\
+		//update rectangle points\
+		//call drawBg\
+	//touchesBegan\
+		//makeDuckFlyUpRight called here\
+
+\fs24 \
+\pard\tx866\pardeftab866\pardirnatural
+
+\f1\fs36 \cf2 \CocoaLigature0 #import \cf3 "DrawScene.h"\cf2 \
+\pard\tx866\pardeftab866\pardirnatural
+\cf0 \
+\pard\tx866\pardeftab866\pardirnatural
+\cf4 //4 functions you should look at:\cf0 \
+\cf4 //drawBg - draw a background over the detected rectangle\cf0 \
+\cf4 //makeDuck - makes a duck\cf0 \
+\cf4 //update - called 1000 times a second to update detected rectangle coordinates and draw background\cf0 \
+\cf4 //touchesBegan - touch screen to make a duck (makeDuck)\cf0 \
+\
+\cf4 //declare variables here!\cf0 \
+\pard\tx866\pardeftab866\pardirnatural
+\cf5 @implementation\cf0  DrawScene\
+\{\
+    \cf4 //the 4 corner points of the rectangle detected\cf0 \
+    \cf7 CGPoint\cf0  topLeft;\
+    \cf7 CGPoint\cf0  topRight;\
+    \cf7 CGPoint\cf0  bottomRight;\
+    \cf7 CGPoint\cf0  bottomLeft;\
+\
+    \cf4 //the SKShapeNode which will overlay the rectangle\cf0 \
+    \cf7 SKShapeNode\cf0  *fourSidedFigure;\
+    \cf10 Sound\cf0 * soundPlayer;\
+\}\
+\
+\pard\tx866\pardeftab866\pardirnatural
+\cf4 //this function is the update loop\cf0 \
+\cf4 //it is called nonstop 1000 times a second\cf0 \
+\cf4 //used for when you need something to be\cf0 \
+\cf4 //constantly updated\cf0 \
+\cf4 //like updating the detected rectangle's coordinates\cf0 \
+\cf4 //or drawing the background over the detected rectangle\cf0 \
+\pard\tx866\pardeftab866\pardirnatural
+\cf5 int\cf0  seconds = \cf9 0\cf0 ;\
+-(\cf5 void\cf0 )update:(\cf7 NSTimeInterval\cf0 )currentTime\
+\{\
+    \cf10 seconds\cf0 ++;\
+    \cf5 if\cf0 (\cf10 seconds\cf0 %\cf9 30\cf0 ==\cf9 0\cf0 )\
+    \{\
+        \cf4 //update the detected rectangle's 4 points\cf0 \
+        [\cf5 self\cf0  \cf8 requestRectangleObjectCoordinates\cf0 ];\
+        \cf4 //draw the background\cf0 \
+        [\cf5 self\cf0  \cf8 drawBg\cf0 ];\
+        \
+        \cf4 //print the rectangle coordinates\cf0 \
+        \cf6 NSLog\cf0 (\cf3 @"Detected Rectangle's 4 pts (x,y):"\cf0 );\
+        \cf6 NSLog\cf0 (\cf3 @"TopLeft: (%i, %i)\\n"\cf0 ,(\cf5 int\cf0 )\cf10 topLeft\cf0 .\cf7 x\cf0 ,(\cf5 int\cf0 )\cf10 topLeft\cf0 .\cf7 y\cf0 );\
+        \cf6 NSLog\cf0 (\cf3 @"TopRight: (%i, %i)\\n"\cf0 ,(\cf5 int\cf0 )\cf10 topRight\cf0 .\cf7 x\cf0 ,(\cf5 int\cf0 )\cf10 topRight\cf0 .\cf7 y\cf0 );\
+        \cf6 NSLog\cf0 (\cf3 @"BottomRight: (%i, %i)\\n"\cf0 ,(\cf5 int\cf0 )\cf10 bottomRight\cf0 .\cf7 x\cf0 ,(\cf5 int\cf0 )\cf10 bottomLeft\cf0 .\cf7 y\cf0 );\
+        \cf6 NSLog\cf0 (\cf3 @"BottomLeft: (%i, %i)\\n"\cf0 ,(\cf5 int\cf0 )\cf10 bottomLeft\cf0 .\cf7 x\cf0 ,(\cf5 int\cf0 )\cf10 bottomLeft\cf0 .\cf7 y\cf0 );\
+        \cf6 NSLog\cf0 (\cf3 @"\\n"\cf0 );\
+    \}\
+\}\
+\
+\pard\tx866\pardeftab866\pardirnatural
+\cf4 //touched the screen\cf0 \
+-(\cf5 void\cf0 )touchesBegan:(\cf7 NSSet\cf0  *)touches withEvent:(\cf7 UIEvent\cf0  *)event\{\
+    \cf7 NSArray\cf0  *allTouches = [[event \cf6 allTouches\cf0 ] \cf6 allObjects\cf0 ];\
+    [\cf5 self\cf0  \cf8 touchesBeganSettingButtons\cf0  :allTouches];\
+    \
+    \cf4 //make the SKSpritenode duck spawn when touch the screen\cf0 \
+    [\cf5 self\cf0  \cf8 makeDuckFlyUpRight\cf0 ];\
+    [\cf5 self\cf0  \cf8 makeDuckFlyUpLeft\cf0 ];\
+    [\cf5 self\cf0  \cf8 makeDuckFlyHorizontallyRight\cf0 ];\
+    [\cf5 self\cf0  \cf8 makeYourOwnDuckMotion\cf0 ];\
+\}\
+\
+\cf4 //DRAW THE BACKGROUND OVER THE DETECTED RECTANGLE\cf0 \
+\cf4 //THE RECTANGLE HAS 4 CGPoints\cf0 \
+\cf4 //to get the x or y:\cf0 \
+\cf4 //topLeft.x or topLeft.y\cf0 \
+\cf4 //4 pts\cf0 \
+    \cf4 //   topLeft ....... topRight\cf0 \
+    \cf4 //           .......\cf0 \
+    \cf4 //           .......\cf0 \
+    \cf4 //bottomLeft         bottomRight\cf0 \
+-(\cf5 void\cf0 )drawBg\
+\{\
+    \cf4 //needed to make the SKShapeNode\cf0 \
+    \cf7 CGPoint\cf0  rect[] = \{\cf10 topLeft\cf0 ,\cf10 topRight\cf0 ,\cf10 bottomRight\cf0 ,\cf10 bottomLeft\cf0 ,\cf10 topLeft\cf0 \};\
+    \cf7 size_t\cf0  numPoints = \cf9 5\cf0 ;\
+    \
+    \cf4 //if SKShapeNode exists already, delete it\cf0 \
+    \cf5 if\cf0 (\cf10 fourSidedFigure\cf0 !=\cf5 nil\cf0 )\
+        [\cf10 fourSidedFigure\cf0  \cf6 removeFromParent\cf0 ];\
+    \
+    \cf4 //make SKShapeNode at the rectangle\'92s points and number of points (5)\cf0 \
+    \cf10 fourSidedFigure\cf0  = [\cf7 SKShapeNode\cf0  \cf6 shapeNodeWithPoints\cf0 :rect \cf6 count\cf0 :numPoints];\
+    \cf4 //make the rect green\cf0 \
+    [\cf10 fourSidedFigure\cf0  \cf6 setFillColor\cf0 :[\cf7 UIColor\cf0  \cf6 greenColor\cf0 ]];\
+    \cf4 //give it an image for the background\cf0 \
+    \cf7 SKTexture\cf0  *tex = [\cf7 SKTexture\cf0  \cf6 textureWithImageNamed\cf0 :\cf3 @"duck_hunt_bg.png"\cf0 ];\
+    \cf4 //apply the image background to it\cf0 \
+    [\cf10 fourSidedFigure\cf0  \cf6 setFillTexture\cf0 :tex];\
+    \cf4 //put it behind the ducks\cf0 \
+    [\cf10 fourSidedFigure\cf0  \cf6 setZPosition\cf0 :-\cf9 1\cf0 ];\
+    \cf4 //add it to the screen\cf0 \
+    [\cf5 self\cf0  \cf6 addChild\cf0 :\cf10 fourSidedFigure\cf0 ];\
+\}\
+\
+\cf4 //Make a duck, give it a spritesheet, give it animation, give it sound\cf0 \
+-(\cf5 void\cf0 )makeDuckFlyUpRight\
+\{\
+    \cf4 //make SKSpriteNode!\cf0 \
+    \cf7 CGPoint\cf0  center = \cf6 CGPointMake\cf0 ((\cf10 topLeft\cf0 .\cf7 x\cf0 +\cf10 topRight\cf0 .\cf7 x\cf0 )/\cf9 2\cf0 , (\cf10 topLeft\cf0 .\cf7 y\cf0  + \cf10 bottomLeft\cf0 .\cf7 y\cf0 )/\cf9 2\cf0 );\
+    \cf7 SKSpriteNode\cf0  *duck = [\cf7 SKSpriteNode\cf0  \cf6 spriteNodeWithImageNamed\cf0 :\cf3 @"duck"\cf0 ];\
+    [duck \cf6 setPosition\cf0 :center];\
+    [\cf5 self\cf0  \cf6 addChild\cf0 :duck];\
+    \
+    \cf4 //spritesheet!\cf0 \
+    \cf4 //an atlas is a folder in the project\cf0 \
+    \cf4 //here it is called duck.atlas\cf0 \
+    \cf4 //it contains images for the animation spritesheets\cf0 \
+    \cf4 //you use the images to make SKTexture\cf0 \
+    \cf4 //then you make an SKAction called animateWithTextures\cf0 \
+    \cf4 //and run it to apply the spritesheet\
+	
+\f0\fs24 \cf0 \CocoaLigature1 {{\NeXTGraphic 22.png \width5140 \height4980
+}¬}
+\f1\fs36 \CocoaLigature0 \
+    \cf7 SKTextureAtlas\cf0  * atlas = [\cf7 SKTextureAtlas\cf0  \cf6 atlasNamed\cf0 :\cf3 @"duck"\cf0 ];\
+    \cf7 SKTexture\cf0  * duckTex1 = [atlas \cf6 textureNamed\cf0 :\cf3 @"flyUpRight1"\cf0 ];\
+    \cf7 SKTexture\cf0  * duckTex2 = [atlas \cf6 textureNamed\cf0 :\cf3 @"flyUpRight2"\cf0 ];\
+    \cf7 NSArray\cf0  * runTexture = \cf9 @[\cf0 duckTex1,duckTex2\cf9 ]\cf0 ;\
+    \cf7 SKAction\cf0 * runAnimation = [\cf7 SKAction\cf0  \cf6 animateWithTextures\cf0 :runTexture \cf6 timePerFrame\cf0 :\cf9 0.075\cf0  \cf6 resize\cf0 :\cf5 NO\cf0  \cf6 restore\cf0 :\cf5 NO\cf0 ];\
+    [duck \cf6 runAction\cf0 :[\cf7 SKAction\cf0  \cf6 repeatActionForever\cf0 :runAnimation]];\
+    \
+    \cf4 //animations! SKAction!\cf0 \
+    \cf4 //make duck gradually get larger by 500 and 500 in 2 sec\cf0 \
+    \cf7 SKAction\cf0 * resizeOut = [\cf7 SKAction\cf0  \cf6 resizeByWidth\cf0 :\cf9 500\cf0  \cf6 height\cf0 :\cf9 500\cf0  \cf6 duration\cf0 :\cf9 2\cf0 ];\
+    \cf4 //move the duck right by 700px and right by 700px in 2 sec\cf0 \
+    \cf7 SKAction\cf0 * flyOut = [\cf7 SKAction\cf0  \cf6 moveByX\cf0 :\cf9 700\cf0  \cf6 y\cf0 :\cf9 700\cf0  \cf6 duration\cf0 :\cf9 2\cf0 ];\
+    \cf4 //run the actions\cf0 \
+    [duck \cf6 runAction\cf0 :resizeOut];\
+    [duck \cf6 runAction\cf0 :flyOut];\
+    \
+    \cf4 //sound!\cf0 \
+    \cf10 soundPlayer\cf0  = [[\cf10 Sound\cf0  \cf6 alloc\cf0 ] \cf6 init\cf0 ];\
+    [\cf10 soundPlayer\cf0  \cf8 playSound\cf0 :\cf3 @"quack"\cf0 ];\}\
+\
+-(\cf5 void\cf0 )makeDuckFlyUpLeft\
+\{\
+    \
+\}\
+\
+-(\cf5 void\cf0 )makeDuckFlyHorizontallyRight\
+\{\
+    \
+\}\
+\
+-(\cf5 void\cf0 )makeYourOwnDuckMotion\
+\{\
+    \
+\}
+\f0\b \CocoaLigature1 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+\cf0 CHALLENGE:
+\b0 \
+Write the 3 other making flying duck functions, each doing different 3D-esque animations using the 4 rectangle points: topLeft, topRight, bottomRight, bottomLeft\
+NOTE: inside touchesBegan is where the functions are called\
+\
+1) -(void)makeDuckFlyUpLeft\
+\{\
+	//like makeDuckFlyUpRight except fly left instead\
+	//you will need to use the following textures \'93flyUpLeft1\'94 and \'93flyUpLeft2\'94\
+\pard\tx866\pardeftab866\pardirnatural
+
+\f1 \cf7 \CocoaLigature0 	//SKTexture\cf0  * duckTex1 = [atlas \cf6 textureNamed\cf0 :\cf3 @"flyUpLeft1"\cf0 ];\
+\cf7 	//SKTexture\cf0  * duckTex2 = [atlas \cf6 textureNamed\cf0 :\cf3 @"flyUpLeft2"\cf0 ];
+\f0 \CocoaLigature1 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+\cf0 \}\
+\pard\tx866\pardeftab866\pardirnatural
+\cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+\cf0 2) -(void)makeDuckFlyHorizontallyRight\
+\{\
+//make duck fly horizontally on the rectangle\'92s 2d plane\
+	//will need to make duck move right\
+	//will need to make duck get smaller or bigger\
+		//depending on if that side is smaller or bigger than the opposite side\
+\}\
+\
+3) -(void)makeYourOwnDuckMotion\
+\{\
+	//make any duck motion you want\
+\}\
+\
+DUE DATE: By next Tuesday Nov. 18 2014 at 11:59PM to calvin.tham@gmail.com}
