@@ -12,6 +12,8 @@
 	<dict>
 		<key>77E5DAF22D870A3B1FAF1976EE8E8E9C166DFB05</key>
 		<string>github.com:cragworks/customcamera_cropped_image_4by3_output.git</string>
+		<key>AB11EEBCFCCB5896DC95F1A060F835A73C21E6A7</key>
+		<string>github.com:mmywong/vgdc_obscure.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
 	<string>customcamera.xcodeproj</string>
@@ -19,6 +21,8 @@
 	<dict>
 		<key>77E5DAF22D870A3B1FAF1976EE8E8E9C166DFB05</key>
 		<string>../..</string>
+		<key>AB11EEBCFCCB5896DC95F1A060F835A73C21E6A7</key>
+		<string>../../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
 	<string>github.com:cragworks/customcamera_cropped_image_4by3_output.git</string>
@@ -28,6 +32,14 @@
 	<string>77E5DAF22D870A3B1FAF1976EE8E8E9C166DFB05</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>AB11EEBCFCCB5896DC95F1A060F835A73C21E6A7</string>
+			<key>IDESourceControlWCCName</key>
+			<string></string>
+		</dict>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>

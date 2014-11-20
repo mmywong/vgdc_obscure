@@ -20,6 +20,8 @@
 #import <AVFoundation/AVFoundation.h>
 #import <CoreImage/CoreImage.h>
 #import <QuartzCore/QuartzCore.h>
+#import <SceneKit/SceneKit.h>
+
 @interface DrawScene : SKScene
 {
     CGFloat screenWidth;

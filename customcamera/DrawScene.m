@@ -52,11 +52,18 @@ int seconds = 0;
     NSArray *allTouches = [[event allTouches] allObjects];
     [self touchesBeganSettingButtons :allTouches];
     
-    //make the SKSpritenode duck spawn when touch the screen
-    [self makeDuckFlyUpRight];
-    [self makeDuckFlyUpLeft];
-    [self makeDuckFlyHorizontallyRight];
-    [self makeYourOwnDuckMotion];
+    for (UITouch *touch in touches) {
+        
+        CGPoint location = [touch locationInNode:self];
+    
+        //make the SKSpritenode duck spawn when touch the screen
+        [self makeDuckFlyUpRight];
+        [self makeDuckFlyUpLeft];
+        [self makeDuckFlyHorizontallyRight];
+        [self makeYourOwnDuckMotion];
+    
+        [self make3DGhost:location.x :location.y];
+    }
 }
 
 //DRAW THE BACKGROUND OVER THE DETECTED RECTANGLE
@@ -143,6 +150,16 @@ int seconds = 0;
     
 }
 
+-(void)make3DGhost:(int)x :(int)y
+{
+    SK3DNode *alien3D = [[SK3DNode alloc] initWithViewportSize:CGSizeMake(self.frame.size.width,
+                                                                          self.frame.size.height)];
+    SCNScene *alienSCN = [SCNScene sceneNamed:@"ghosty.dae"];
+    alien3D.scnScene = alienSCN;
+    [alien3D setPosition:CGPointMake(x - 350, y)];
+    [alien3D setScale:0.25];
+    [self addChild:alien3D];
+}
 
 
 
