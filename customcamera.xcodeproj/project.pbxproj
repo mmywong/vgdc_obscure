@@ -38,6 +38,7 @@
 		43A1CFAD1A06FB6B0057CEDD /* button_take_screenshot_blue@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 43A1CFA71A06FB6B0057CEDD /* button_take_screenshot_blue@2x.png */; };
 		43A1CFAE1A06FB6B0057CEDD /* button_switch_camera_pressed_2@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 43A1CFA81A06FB6B0057CEDD /* button_switch_camera_pressed_2@2x.png */; };
 		43A1CFAF1A06FB6B0057CEDD /* button_switch_camera_2@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 43A1CFA91A06FB6B0057CEDD /* button_switch_camera_2@2x.png */; };
+		43F6D5C91A1D91A60078C003 /* ghosty.dae in Resources */ = {isa = PBXBuildFile; fileRef = 43F6D5C81A1D91A60078C003 /* ghosty.dae */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -90,6 +91,7 @@
 		43A1CFA71A06FB6B0057CEDD /* button_take_screenshot_blue@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "button_take_screenshot_blue@2x.png"; sourceTree = "<group>"; };
 		43A1CFA81A06FB6B0057CEDD /* button_switch_camera_pressed_2@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "button_switch_camera_pressed_2@2x.png"; sourceTree = "<group>"; };
 		43A1CFA91A06FB6B0057CEDD /* button_switch_camera_2@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "button_switch_camera_2@2x.png"; sourceTree = "<group>"; };
+		43F6D5C81A1D91A60078C003 /* ghosty.dae */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml.dae; path = ghosty.dae; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -120,6 +122,7 @@
 		4360459C197CD5CC002BD315 = {
 			isa = PBXGroup;
 			children = (
+				43F6D5C81A1D91A60078C003 /* ghosty.dae */,
 				437D0FD61A11FB70005FD1F0 /* quack.aiff */,
 				437D0FC41A11F0F6005FD1F0 /* duck_hunt_2.aiff */,
 				437D0FC51A11F0F6005FD1F0 /* duck_hunt.aiff */,
@@ -301,6 +304,7 @@
 				436045B3197CD5CC002BD315 /* InfoPlist.strings in Resources */,
 				436045BC197CD5CD002BD315 /* Main.storyboard in Resources */,
 				437D0FCC1A11F0F6005FD1F0 /* duck_hunt_2.aiff in Resources */,
+				43F6D5C91A1D91A60078C003 /* ghosty.dae in Resources */,
 				43A1CFAE1A06FB6B0057CEDD /* button_switch_camera_pressed_2@2x.png in Resources */,
 				437D0FD11A11F0F6005FD1F0 /* button_clear_2@2x.png in Resources */,
 				43A1CFAD1A06FB6B0057CEDD /* button_take_screenshot_blue@2x.png in Resources */,
